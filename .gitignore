@@ -29,4 +29,6 @@ node_modules
 
 #howick specific exclusions
 db
+dist
+certs
 config.json
