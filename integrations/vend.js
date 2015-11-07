@@ -1,12 +1,11 @@
 var vendSdk = require('vend-nodejs-sdk')({});
 var jsonfile = require('jsonfile');
-var debug = require('debug');
-
+var debug = require('debug')('vend');
 var exports = module.exports = {};
 var connectionInfo = jsonfile.readFileSync('./config.json').vend;
 
-exports.getSalesSince = function(since, callback) {
-    debug.log('Getting sales from Vend...');
+exports.getSales = function(since, callback) {
+    debug('Getting sales from Vend...');
 
     var args = vendSdk.args.sales.fetch();
     args.pageSize.value = 500;
@@ -18,17 +17,17 @@ exports.getSalesSince = function(since, callback) {
 
     vendSdk.sales.fetchAll(args, connectionInfo)
         .then(function(response) {
-            debug.log('Retrieved %s sales'.green, response.length);
+            debug('Retrieved %s sales', response.length);
             callback(null, response);
         })
         .catch(function(error) {
-            debug.log(('Error retrieving sales from Vend: ' + error).red);
+            console.log(('Error retrieving sales from Vend: ' + error).red);
             callback(error);
         });
 };
 
 exports.getProducts = function(since, callback) {
-    debug.log('Getting products from Vend...');
+    debug('Getting products from Vend...');
 
     var args = vendSdk.args.products.fetch();
     args.pageSize.value = 500;
@@ -40,26 +39,26 @@ exports.getProducts = function(since, callback) {
 
     vendSdk.products.fetch(args, connectionInfo)
         .then(function(response) {
-            debug.log('Retrieved %s products'.green, response.products.length);
+            debug('Retrieved %s products', response.products.length);
             callback(null, response.products);
         })
         .catch(function(error) {
-            debug.log(('Error retrieving products from Vend: ' + error).red);
+            console.log(('Error retrieving products from Vend: ' + error).red);
             callback(error);
         });
 
 };
 
 exports.getAllProducts = function(callback) {
-    debug.log('Getting all products from Vend...');
+    debug('Getting all products from Vend...');
 
     vendSdk.products.fetchAll(connectionInfo)
         .then(function(response) {
-            debug.log('Retrieved %s products'.green, response.length);
+            debug('Retrieved %s products', response.length);
             callback(null, response);
         })
         .catch(function(error) {
-            debug.log(('Error retrieving products from Vend: ' + error).red);
+            console.log(('Error retrieving products from Vend: ' + error).red);
             callback(error);
         });
 

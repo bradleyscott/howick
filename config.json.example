@@ -1,4 +1,22 @@
 {
+    "xero": {
+        "register_id_1": {
+            "consumerKey": "associated-consumer-key",
+            "consumerSecret": "associated-consumer-secret",
+            "rsaPrivateKey": ["-----BEGIN RSA PRIVATE KEY-----",
+                "rsa-key-text-goes-here",
+                "-----END RSA PRIVATE KEY-----"
+            ]
+        },
+        "register_id_2": {
+            "consumerKey": "associated-consumer-key",
+            "consumerSecret": "associated-consumer-secret",
+            "rsaPrivateKey": ["-----BEGIN RSA PRIVATE KEY-----",
+                "rsa-key-text-goes-here",
+                "-----END RSA PRIVATE KEY-----"
+            ]
+        }
+    },
     "vend": {
         "registers": {
             "Register-1": "register_id_1",

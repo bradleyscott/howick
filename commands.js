@@ -64,38 +64,38 @@ exports.confirmSales = function(sales, callback) {
 
 exports.getDateRange = function(callback) {
 
-    var from = moment().day(-4).startOf('day').toDate(); // The Wednday prior
+    var from = moment().day(-4).startOf('day'); // The Wednday prior
     var fromQuestion = {
         type: 'input',
         name: 'from',
-        message: 'What is date you want sales from? (MM/DD/YYYY)',
-        default: from.toLocaleDateString(),
+        message: 'What is date you want sales from?',
+        default: from.format('DD/MM/YYYY'),
         validate: function(input) {
-            var from = moment(input, "M/DD/YYYY");
+            var from = moment(input, "DD/MM/YYYY");
             if (from.isValid) return true;
             else return "That isn't a valid date";
         },
         filter: function(input) {
-            return moment(input, "M/DD/YYYY").toDate();
+            return moment(input, "DD/MM/YYYY").toDate();
         }
     };
     inquirer.prompt(fromQuestion, function(fromAnswers) {
         from = fromAnswers.from;
         debug('from: %s', from);
 
-        var to = moment().day(3).startOf('day').toDate(); // Most recent Wedesday
+        var to = moment().day(3).startOf('day'); // Most recent Wedesday
         var toQuestion = {
             type: 'input',
             name: 'to',
-            message: 'What is the last date you sales for? (MM/DD/YYYY)',
-            default: to.toLocaleDateString(),
+            message: 'What is the last date you sales for?',
+            default: to.format('DD/MM/YYYY'),
             validate: function(input) {
-                var from = moment(input, "M/DD/YYYY");
+                var from = moment(input, "DD/MM/YYYY");
                 if (from.isValid) return true;
                 else return "That isn't a valid date";
             },
             filter: function(input) {
-                return moment(input, "M/DD/YYYY").toDate();
+                return moment(input, "DD/MM/YYYY").toDate();
             }
         };
         inquirer.prompt(toQuestion, function(toAnswers) {
@@ -169,7 +169,7 @@ exports.getLatestProducts = function(callback) {
     spinner.start();
 
     products.getMostRecentProductAsync().then(function(product) {
-            var retrieveFrom = product ? moment(product.updated_at).toDate() : moment().subtract(10, 'years');
+            var retrieveFrom = product ? moment(product.updated_at).toDate() : moment().subtract(10, 'years').toDate();
             return vend.getProductsAsync(retrieveFrom);
         })
         .then(function(result) {
@@ -194,7 +194,7 @@ exports.getLatestSales = function(callback) {
     spinner.start();
 
     sales.getMostRecentSaleAsync().then(function(sale) {
-            var retrieveFrom = sale ? moment(sale.sale_date).toDate() : moment().subtract(1, 'months');
+            var retrieveFrom = sale ? moment(sale.sale_date).toDate() : moment().subtract(1, 'months').toDate();
             return vend.getSalesAsync(retrieveFrom);
         }).then(function(result) {
             spinner.stop();
