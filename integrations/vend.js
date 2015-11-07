@@ -9,6 +9,7 @@ exports.getSalesSince = function(since, callback) {
     debug.log('Getting sales from Vend...');
 
     var args = vendSdk.args.sales.fetch();
+    args.pageSize.value = 500;
 
     if (since) {
         args.since = {};
@@ -30,6 +31,7 @@ exports.getProducts = function(since, callback) {
     debug.log('Getting products from Vend...');
 
     var args = vendSdk.args.products.fetch();
+    args.pageSize.value = 500;
 
     if (since) {
         args.since = {};
