@@ -1,0 +1,14 @@
+{
+    "vend": {
+        "registers": {
+            "Register-1": "register_id_1",
+            "Register-2" : "register_id_2"
+        },
+        "vendTokenService": "https://your-domain-prefix.vendhq.com/api/1.0/token",
+        "domainPrefix": "your-domain-prefix",
+        "refreshToken": "your-refresh-token",
+        "vendClientId": "your-client-id",
+        "vendClientSecret": "your-client-secret",
+        "accessToken": "your-access-token"
+    }
+}
