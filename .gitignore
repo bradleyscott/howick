@@ -28,5 +28,5 @@ build/Release
 node_modules
 
 #howick specific exclusions
-data
+db
 config.json
