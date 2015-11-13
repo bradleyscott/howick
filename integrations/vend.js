@@ -1,18 +1,20 @@
 var vendSdk = require('vend-nodejs-sdk')({});
 var jsonfile = require('jsonfile');
+var moment = require('moment');
 var debug = require('debug')('vend');
 var exports = module.exports = {};
 var connectionInfo = jsonfile.readFileSync('./config.json').vend;
 
 exports.getSales = function(since, callback) {
     debug('Getting sales from Vend...');
+    debug('since: %s', since);
 
     var args = vendSdk.args.sales.fetch();
     args.pageSize.value = 500;
 
     if (since) {
         args.since = {};
-        args.since.value = since;
+        args.since.value = moment(since).utc().toDate();
     }
 
     vendSdk.sales.fetchAll(args, connectionInfo)
@@ -28,13 +30,13 @@ exports.getSales = function(since, callback) {
 
 exports.getProducts = function(since, callback) {
     debug('Getting products from Vend...');
+    debug('since: %s', since);
 
     var args = vendSdk.args.products.fetch();
-    args.pageSize.value = 500;
 
     if (since) {
         args.since = {};
-        args.since.value = since;
+        args.since.value = moment(since).utc().toDate();
     }
 
     vendSdk.products.fetch(args, connectionInfo)
