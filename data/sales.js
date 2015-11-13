@@ -35,11 +35,19 @@ exports.getSalesByTag = function(register_id, from, to, callback) {
                         return {
                             tag: tag,
                             sales: _(sales).reduce(function(total, sale){
+                                return total + sale.quantity;
+                            }, 0),
+                            revenue: _(sales).reduce(function(total, sale){
                                 return total + sale.price_total;
+                            }, 0),
+                            tax: _(sales).reduce(function(total, sale){
+                                return total + sale.tax_total;
                             }, 0)
                         };
                     })
-                    .value();
+                    .sortBy('revenue')
+                    .value()
+                    .reverse();
 
                 debug('Successfully retrieved sales for %s tags', sales.length);
                 callback(null, sales);
@@ -56,8 +64,8 @@ exports.getProductSales = function(register_id, from, to, callback) {
     debug('Attempting to get all product sales');
 
     register_id = register_id ? register_id : settings.registers['101-Howick']; // Defaul to 101 Howick
-    to = to ? to : moment().day(3).startOf('day').toDate(); // Most recent Wedesday
-    from = from ? from : moment().day(-4).startOf('day').toDate(); // The Wednday prior
+    to = to ? moment(to).utc().toDate() : moment().utc().day(3).startOf('day').toDate(); // Most recent Wedesday
+    from = from ? moment(from).utc().toDate() : moment().utc().day(-4).startOf('day').toDate(); // The Wednday prior
     debug('register_id: %s', register_id);
     debug('from: %s', from);
     debug('to: %s', to);

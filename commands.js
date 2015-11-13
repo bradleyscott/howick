@@ -32,21 +32,28 @@ exports.createInvoice = function(register_id, sales, callback) {
 
 exports.confirmSales = function(sales, callback) {
     var table = new Table({
-        head: ['Product tag', 'Sales ($)'],
-        colWidths: [30, 20]
+        head: ['Product tag', 'Sales (#)', 'Sales ($)', 'Tax ($)'],
+        colWidths: [30, 15, 20, 20]
     });
 
     // Add a row for each tag
     _(sales).each(function(tag) {
-        table.push([tag.tag, tag.sales.toFixed(2)]);
+        table.push([tag.tag, tag.sales, tag.revenue.toFixed(2), tag.tax.toFixed(2)]);
     });
 
     // Add a row for the total
-    var total = _(sales).reduce(function(total, tag) {
-        var increment = tag.sales > 0 ? tag.sales : 0;
-        return total + increment;
+    var salesTotal = _(sales).reduce(function(total, tag) {
+        return total + tag.sales;
     }, 0);
-    table.push(['TOTAL SALES', total.toFixed(2)]);
+    var revenueTotal = _(sales).reduce(function(total, tag) {
+        var increment = tag.revenue > 0 ? tag.revenue : 0;
+        return total + tag.revenue;
+    }, 0);
+    var taxTotal = _(sales).reduce(function(total, tag) {
+        var increment = tag.tax > 0 ? tag.tax : 0;
+        return total + tag.tax;
+    }, 0);
+    table.push(['TOTAL SALES', salesTotal, revenueTotal.toFixed(2), taxTotal.toFixed(2)]);
 
     console.log(table.toString());
 
@@ -64,7 +71,7 @@ exports.confirmSales = function(sales, callback) {
 
 exports.getDateRange = function(callback) {
 
-    var from = moment().day(-4).startOf('day'); // The Wednday prior
+    var from = moment().day(-5).startOf('day'); // The Tuesday prior
     var fromQuestion = {
         type: 'input',
         name: 'from',
@@ -83,11 +90,11 @@ exports.getDateRange = function(callback) {
         from = fromAnswers.from;
         debug('from: %s', from);
 
-        var to = moment().day(3).startOf('day'); // Most recent Wedesday
+        var to = moment(from).add(6, 'days'); // 6 days from the from date
         var toQuestion = {
             type: 'input',
             name: 'to',
-            message: 'What is the last date you sales for?',
+            message: 'What is the last date you want sales for?',
             default: to.format('DD/MM/YYYY'),
             validate: function(input) {
                 var from = moment(input, "DD/MM/YYYY");
@@ -99,7 +106,7 @@ exports.getDateRange = function(callback) {
             }
         };
         inquirer.prompt(toQuestion, function(toAnswers) {
-            to = toAnswers.to;
+            to = moment(toAnswers.to).add(1, 'day').toDate();
             debug('to: %s', to);
             callback(null, from, to);
         });
@@ -169,8 +176,10 @@ exports.getLatestProducts = function(callback) {
     spinner.start();
 
     products.getMostRecentProductAsync().then(function(product) {
-            var retrieveFrom = product ? moment(product.updated_at).toDate() : moment().subtract(10, 'years').toDate();
-            return vend.getProductsAsync(retrieveFrom);
+            if (product) {
+                var retrieveFrom = moment(product.updated_at).toDate();
+                return vend.getProductsAsync(retrieveFrom);
+            } else return vend.getAllProductsAsync();
         })
         .then(function(result) {
             spinner.stop();
@@ -194,7 +203,7 @@ exports.getLatestSales = function(callback) {
     spinner.start();
 
     sales.getMostRecentSaleAsync().then(function(sale) {
-            var retrieveFrom = sale ? moment(sale.sale_date).toDate() : moment().subtract(1, 'months').toDate();
+            var retrieveFrom = sale ? moment(sale.sale_date).toDate() : moment().subtract(6, 'weeks').toDate();
             return vend.getSalesAsync(retrieveFrom);
         }).then(function(result) {
             spinner.stop();
