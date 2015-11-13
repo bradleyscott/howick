@@ -36,7 +36,7 @@ commands.getLatestSalesAsync()
     .then(function(confirmed) {
         if (confirmed) return commands.createInvoiceAsync(register_id, sales);
         else {
-            console.log("Closing Howick as sales totals don't look right".green);
+            console.log("Closing howick as sales totals don't look right".green);
             return;
         }
     })
