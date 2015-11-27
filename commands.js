@@ -177,7 +177,7 @@ exports.getLatestProducts = function(callback) {
 
     products.getMostRecentProductAsync().then(function(product) {
             if (product) {
-                var retrieveFrom = moment(product.updated_at).toDate();
+                var retrieveFrom = moment.utc(product.updated_at).toDate();
                 return vend.getProductsAsync(retrieveFrom);
             } else return vend.getAllProductsAsync();
         })
@@ -203,7 +203,7 @@ exports.getLatestSales = function(callback) {
     spinner.start();
 
     sales.getMostRecentSaleAsync().then(function(sale) {
-            var retrieveFrom = sale ? moment(sale.sale_date).toDate() : moment().subtract(6, 'weeks').toDate();
+            var retrieveFrom = sale ? moment.utc(sale.sale_date).toDate() : moment().subtract(6, 'weeks').toDate();
             return vend.getSalesAsync(retrieveFrom);
         }).then(function(result) {
             spinner.stop();

@@ -7,15 +7,15 @@ var connectionInfo = jsonfile.readFileSync('./config.json').vend;
 
 exports.getSales = function(since, callback) {
     debug('Getting sales from Vend...');
-    debug('since: %s', since);
 
     var args = vendSdk.args.sales.fetch();
     args.pageSize.value = 500;
 
     if (since) {
         args.since = {};
-        args.since.value = moment(since).utc().toDate();
+        args.since.value = moment(since).toISOString();
     }
+    debug('since: %s', args.since.value);
 
     vendSdk.sales.fetchAll(args, connectionInfo)
         .then(function(response) {
@@ -30,14 +30,14 @@ exports.getSales = function(since, callback) {
 
 exports.getProducts = function(since, callback) {
     debug('Getting products from Vend...');
-    debug('since: %s', since);
 
     var args = vendSdk.args.products.fetch();
 
     if (since) {
         args.since = {};
-        args.since.value = moment(since).utc().toDate();
+        args.since.value = moment(since).toISOString();
     }
+    debug('since: %s', args.since.value);
 
     vendSdk.products.fetch(args, connectionInfo)
         .then(function(response) {

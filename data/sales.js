@@ -64,11 +64,11 @@ exports.getProductSales = function(register_id, from, to, callback) {
     debug('Attempting to get all product sales');
 
     register_id = register_id ? register_id : settings.registers['101-Howick']; // Defaul to 101 Howick
-    to = to ? moment(to).utc().toDate() : moment().utc().day(3).startOf('day').toDate(); // Most recent Wedesday
-    from = from ? moment(from).utc().toDate() : moment().utc().day(-4).startOf('day').toDate(); // The Wednday prior
+    to = to ? moment(to).toDate() : moment().day(3).startOf('day').toDate(); // Most recent Wedesday
+    from = from ? moment(from).toDate() : moment().day(-4).startOf('day').toDate(); // The Wednday prior
     debug('register_id: %s', register_id);
-    debug('from: %s', from);
-    debug('to: %s', to);
+    debug('from: %s', from.toISOString());
+    debug('to: %s', to.toISOString());
 
     var dbSales = db.collection('sales');
     dbSales.find({
