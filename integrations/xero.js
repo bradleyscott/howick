@@ -15,18 +15,18 @@ exports.createInvoice = function(register_id, sales, callback) {
         Contact: { Name: "Vend Reconciliation" },
         Date: moment().format('YYYY-MM-DD'),
         DueDate: moment().add(1, 'months').format('YYYY-MM-DD'),
-        LineAmountTypes: 'Inclusive',
+        LineAmountTypes: 'Exclusive',
         LineItems: []
     };
 
     _(sales).each(function(sale){
-        var description = sale.tag == '' ? 'Products with no Tag' : sale.tag; // Ensure there is always a description
-        var amount = sale.sales < 0 ? 0 : sale.sales; // No line items less than 0
-
         invoice.LineItems.push({
-            Description: description,
+            Description: sale.tag == '' ? 'General' : sale.tag, // Ensure there is always a description
             Quantity: 1,
-            UnitAmount: amount
+            UnitAmount: sale.revenue,
+            TaxAmount: sale.tax,
+            TaxType: 'OUTPUT2',
+            AccountCode: 200 // Default sales account
         });
     });
 
