@@ -13,7 +13,7 @@ var settings = jsonfile.readFileSync('./config.json').vend;
 
 exports.getSalesByTag = function(register_id, from, to, callback) {
     debug('Attempting to get product sales by Tag');
-    
+
     products.getProductsAsync().then(function(products) {
 
             // Create tag map 
@@ -28,24 +28,24 @@ exports.getSalesByTag = function(register_id, from, to, callback) {
                     .each(function(sale) {
                         sale.product_tag = tagMap[sale.product_id];
                     })
-                    .groupBy(function(sale){
+                    .groupBy(function(sale) {
                         return sale.product_tag;
                     })
-                    .map(function(sales, tag){
+                    .map(function(sales, tag) {
                         return {
                             tag: tag,
-                            sales: _(sales).reduce(function(total, sale){
+                            sales: _(sales).reduce(function(total, sale) {
                                 return total + sale.quantity;
                             }, 0),
-                            revenue: _(sales).reduce(function(total, sale){
+                            exclusive: _(sales).reduce(function(total, sale) {
                                 return total + sale.price_total;
                             }, 0),
-                            tax: _(sales).reduce(function(total, sale){
+                            tax: _(sales).reduce(function(total, sale) {
                                 return total + sale.tax_total;
                             }, 0)
                         };
                     })
-                    .sortBy('revenue')
+                    .sortBy('exclusive')
                     .value()
                     .reverse();
 
@@ -58,6 +58,55 @@ exports.getSalesByTag = function(register_id, from, to, callback) {
             callback(error);
         });
 
+};
+
+exports.getSalesTotals = function(register_id, from, to, callback) {
+    debug('Attempting to get all sales totals');
+
+    register_id = register_id ? register_id : settings.registers['101-Howick']; // Defaul to 101 Howick
+    to = to ? moment(to).toDate() : moment().day(3).startOf('day').toDate(); // Most recent Wedesday
+    from = from ? moment(from).toDate() : moment().day(-4).startOf('day').toDate(); // The Wednday prior
+    debug('register_id: %s', register_id);
+    debug('from: %s', from.toISOString());
+    debug('to: %s', to.toISOString());
+
+    var dbSales = db.collection('sales');
+    dbSales.find({
+        register_id: register_id,
+        sale_date: {
+            $gte: from.toISOString(),
+            $lt: to.toISOString()
+        }
+    }, {
+        totals: 1
+    }).toArray(function(error, result) {
+        if (error) {
+            console.log('Error trying to get sales totals: %s'.red, error);
+            callback(error);
+        } else {
+            var totals = _.chain(result)
+                .pluck('totals')
+                .flatten(true)
+                .value();
+
+            var exclusive = _(totals).reduce(function(total, sale) {
+                return total + sale.total_price;
+            }, 0);
+            var tax = _(totals).reduce(function(total, sale) {
+                return total + sale.total_tax;
+            }, 0);
+
+            totals = {
+                count: totals.length,
+                exclusive: exclusive, 
+                tax: tax,
+                total: exclusive + tax
+            };
+
+            debug('Retrieved %s sales', totals.count);
+            callback(null, totals);
+        }
+    });
 };
 
 exports.getProductSales = function(register_id, from, to, callback) {

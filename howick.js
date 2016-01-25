@@ -73,7 +73,7 @@ program
                 });
         }
 
-        var register_id, sales;
+        var register_id, sales, dates, totals;
         updatePromise.promise.then(function() {
                 return helpers.getRegisterIdAsync();
             })
@@ -81,17 +81,26 @@ program
                 register_id = value;
                 return helpers.getDateRangeAsync();
             })
-            .then(function(dates) {
+            .then(function(response) {
+                dates = response;
                 return helpers.getProductSalesAsync(register_id, dates[0], dates[1]);
             })
             .then(function(response) {
                 sales = response;
-                console.log('');
-                console.log('Finished calculating product sales'.green);
-                return helpers.confirmSalesAsync(sales);
+                return helpers.getSalesTotalsAsync(register_id, dates[0], dates[1]);
             })
-            .then(function(confirmed) {
-                if (confirmed) return helpers.createInvoiceAsync(register_id, sales);
+            .then(function(response){
+                totals = response;
+                console.log('');
+                helpers.displayTotals(totals, sales); // Display totals
+                return helpers.confirmViewSalesAsync(); // Ask user if they want to see sales by tag
+            })
+            .then(function(displaySales){
+                if(displaySales) helpers.displayProductSales(sales);
+                return helpers.confirmInvoiceAsync();
+            })
+            .then(function(invoiceConfirmed) {
+                if (invoiceConfirmed) return helpers.createInvoiceAsync(register_id, sales, totals);
                 else {
                     console.log("No Xero invoice created".green);
                     return;

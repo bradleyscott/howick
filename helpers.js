@@ -1,4 +1,4 @@
-var debug = require('debug')('commands');
+var debug = require('debug')('helpers');
 var colors = require('colors');
 var moment = require('moment');
 var Promise = require('bluebird');
@@ -14,11 +14,12 @@ var sales = Promise.promisifyAll(require('./data/sales.js'));
 var products = Promise.promisifyAll(require('./data/products.js'));
 var exports = module.exports = {};
 
-exports.createInvoice = function(register_id, sales, callback) {
+exports.createInvoice = function(register_id, sales, totals, callback) {
     var spinner = new Spinner('Creating draft Xero invoice... %s');
     spinner.start();
 
-    xero.createInvoiceAsync(register_id, sales).then(function(invoice) {
+    var difference = exports.getDifference(totals, sales);
+    xero.createInvoiceAsync(register_id, sales, difference).then(function(invoice) {
             debug('Xero invoice successfully created');
             spinner.stop();
             callback(null, invoice);
@@ -30,37 +31,91 @@ exports.createInvoice = function(register_id, sales, callback) {
         });
 };
 
-exports.confirmSales = function(sales, callback) {
+exports.reduceSalesTotals = function(sales) {
+
+    var count = _(sales).reduce(function(total, tag){
+        return total + tag.sales;
+    }, 0);
+    var exclusive = _(sales).reduce(function(total, tag) {
+        var increment = tag.exclusive > 0 ? tag.exclusive : 0;
+        return total + increment;
+    }, 0);
+    var tax = _(sales).reduce(function(total, tag) {
+        var increment = tag.tax > 0 ? tag.tax : 0;
+        return total + increment;
+    }, 0);
+    var total = exclusive + tax;
+
+    return {
+        count: count,
+        exclusive: exclusive,
+        tax: tax,
+        total: total
+    };
+};
+
+exports.getDifference = function(totals, sales) {
+    sales = exports.reduceSalesTotals(sales);
+    return {
+        exclusive: totals.exclusive - sales.exclusive,
+        tax: totals.tax - sales.tax,
+        total: totals.total - sales.total
+    };
+};
+
+exports.displayTotals = function(totals, sales) {
+
     var table = new Table({
-        head: ['Product tag', 'Sales #', 'Sales $', 'Tax $'],
-        colWidths: [30, 10, 15, 15]
+        head: ['', 'Ex GST $', 'GST $', 'Total $'],
+        colWidths: [30, 15, 15, 15]
+    });
+
+    var difference = exports.getDifference(totals, sales); // Get differences
+    sales = exports.reduceSalesTotals(sales);
+
+    table.push(['Product sales', sales.exclusive.toFixed(2), sales.tax.toFixed(2), sales.total.toFixed(2)]);
+    table.push(['Payments received', totals.exclusive.toFixed(2), totals.tax.toFixed(2), totals.total.toFixed(2)]);
+    table.push(['Difference', difference.exclusive.toFixed(2), difference.tax.toFixed(2), difference.total.toFixed(2)]);
+ 
+    console.log(table.toString());
+};
+
+exports.displayProductSales = function(sales) {
+    var table = new Table({
+        head: ['Product tag', '# sales', 'Ex GST $', 'GST $', 'Total $'],
+        colWidths: [30, 10, 15, 15, 15]
     });
 
     // Add a row for each tag
     _(sales).each(function(tag) {
-        table.push([tag.tag, tag.sales, tag.revenue.toFixed(2), tag.tax.toFixed(2)]);
+        table.push([tag.tag, tag.sales, tag.exclusive.toFixed(2), tag.tax.toFixed(2), (tag.exclusive + tag.tax).toFixed(2)]);
     });
 
     // Add a row for the total
-    var salesTotal = _(sales).reduce(function(total, tag) {
-        return total + tag.sales;
-    }, 0);
-    var revenueTotal = _(sales).reduce(function(total, tag) {
-        var increment = tag.revenue > 0 ? tag.revenue : 0;
-        return total + tag.revenue;
-    }, 0);
-    var taxTotal = _(sales).reduce(function(total, tag) {
-        var increment = tag.tax > 0 ? tag.tax : 0;
-        return total + tag.tax;
-    }, 0);
-    table.push(['TOTAL SALES', salesTotal, revenueTotal.toFixed(2), taxTotal.toFixed(2)]);
+    sales = exports.reduceSalesTotals(sales);
+    table.push(['TOTAL SALES', sales.count, sales.exclusive.toFixed(2), sales.tax.toFixed(2), sales.total.toFixed(2)]);
 
     console.log(table.toString());
+};
 
+exports.confirmViewSales = function(callback) {
     var question = {
         type: 'confirm',
         name: 'confirm',
-        message: 'Do you want to create a draft Xero invoice based on these sales figures?',
+        message: 'Do you want to have a look at sales by Product type?',
+        default: false
+    };
+    inquirer.prompt(question, function(answers) {
+        debug('Confirmation: %s', answers.confirm);
+        return callback(null, answers.confirm);
+    });
+};
+
+exports.confirmInvoice = function(callback) {
+    var question = {
+        type: 'confirm',
+        name: 'confirm',
+        message: 'Do you want to create a draft Xero invoice for these sales?',
         default: false
     };
     inquirer.prompt(question, function(answers) {
@@ -145,6 +200,21 @@ exports.getProductSales = function(register_id, from, to, callback) {
         })
         .catch(function(error) {
             console.log('Catastrophe calculating product sales: %s'.red, error);
+            spinner.stop();
+            callback(error);
+        });
+};
+
+exports.getSalesTotals = function(register_id, from, to, callback) {
+    var spinner = new Spinner('Calculating sales totals... %s');
+    spinner.start();
+
+    sales.getSalesTotalsAsync(register_id, from, to).then(function(result) {
+            spinner.stop();
+            callback(null, result);
+        })
+        .catch(function(error) {
+            console.log('Catastrophe calculating sales totals: %s'.red, error);
             spinner.stop();
             callback(error);
         });
