@@ -89,20 +89,23 @@ program
                 sales = response;
                 return helpers.getSalesTotalsAsync(register_id, dates[0], dates[1]);
             })
-            .then(function(response){
+            .then(function(response) {
                 totals = response;
                 console.log('');
                 helpers.displayTotals(totals, sales); // Display totals
                 return helpers.confirmViewSalesAsync(); // Ask user if they want to see sales by tag
             })
-            .then(function(displaySales){
-                if(displaySales) helpers.displayProductSales(sales);
-                return helpers.confirmInvoiceAsync();
+            .then(function(displaySales) {
+                if (displaySales) helpers.displayProductSales(sales);
+
+                var amount = helpers.reduceSalesTotals(sales).total.toFixed(2);
+                return helpers.confirmInvoiceAsync(amount);
             })
             .then(function(invoiceConfirmed) {
                 if (invoiceConfirmed) return helpers.createInvoiceAsync(register_id, sales, totals);
                 else {
                     console.log("No Xero invoice created".green);
+                    console.log("Exiting...".yellow);
                     return;
                 }
             })
@@ -110,13 +113,15 @@ program
                 if (invoice) { // Display invoice confirm
                     console.log('');
                     console.log(('Xero draft invoice %s created for total of $' + invoice.Total).green, invoice.InvoiceNumber);
+                    console.log('Exiting...'.yellow);
                 }
             }).catch(function(error) {
                 console.log('Closing howick because of error: %s'.red, error);
+                console.log('Exiting...'.yellow);
                 return;
             });
-
     });
+
 
 program.parse(process.argv);
 if (!program.args.length) program.help();

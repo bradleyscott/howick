@@ -37,12 +37,10 @@ exports.reduceSalesTotals = function(sales) {
         return total + tag.sales;
     }, 0);
     var exclusive = _(sales).reduce(function(total, tag) {
-        var increment = tag.exclusive > 0 ? tag.exclusive : 0;
-        return total + increment;
+        return total + tag.exclusive;
     }, 0);
     var tax = _(sales).reduce(function(total, tag) {
-        var increment = tag.tax > 0 ? tag.tax : 0;
-        return total + increment;
+        return total + tag.tax;
     }, 0);
     var total = exclusive + tax;
 
@@ -111,11 +109,12 @@ exports.confirmViewSales = function(callback) {
     });
 };
 
-exports.confirmInvoice = function(callback) {
+exports.confirmInvoice = function(amount, callback) {
+
     var question = {
         type: 'confirm',
         name: 'confirm',
-        message: 'Do you want to create a draft Xero invoice for these sales?',
+        message: 'Do you want to create a draft Xero invoice for sales of $' + amount + '?',
         default: false
     };
     inquirer.prompt(question, function(answers) {
